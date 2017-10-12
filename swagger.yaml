@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   version: 1.0.2
   title: Muj testing SWAGER
-  description:  Sem patří popis dokumentace.   |
+  description:  Sem patří popis dokumentace. Tady je zmena, kterou jsem udelal pred Snapshotem v GitHubu.   |
        Description of the operation in Markdown
        
        `Může být stylovaný`
