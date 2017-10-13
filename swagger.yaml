@@ -1,0 +1,34 @@
+swagger: '2.0'
+info:
+  version: 1.0.2
+  title: Muj testing SWAGGER
+  description:  Sem patří popis dokumentace. Tady je zmena, kterou jsem udelal pred Snapshotem v GitHubu.   |
+       Description of the operation in Markdown
+       
+       `Může být stylovaný`
+       A tady je změna, kterou jsem udělal v apiary před Pushem do GitHubu
+schemes: [https]
+host: host
+basePath: /api
+paths:
+  /endpoint_1:
+    x-summary: Popis endpointu 1
+    x-description: 'tady je popis'
+    get:
+      summary: Název GET metody webservicy
+      description: |
+       Tady je popis GET metody webservicy
+      operationId: getZprava
+      parameters:
+        - name: name
+          in: query
+          description: name to include in the message
+          type: string
+          x-example: 'stock=1'
+      responses:
+        200:
+          description: 'List'
+          examples:
+            application/json:
+              - question: "Favourite programming language?"
+                published_at: "2015-08-05T08:40:51.620Z"
