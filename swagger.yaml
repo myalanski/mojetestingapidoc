@@ -1,34 +1,395 @@
 swagger: '2.0'
 info:
-  version: 1.0.2
-  title: Muj testing SWAGGER
-  description:  Sem patří popis dokumentace. Tady je zmena, kterou jsem udelal pred Snapshotem v GitHubu.   |
-       Description of the operation in Markdown
-       
-       `Může být stylovaný`
-       A tady je změna, kterou jsem udělal v apiary před Pushem do GitHubu
-schemes: [https]
-host: host
-basePath: /api
+  version: 1.0.1
+  title: Global Label API
+host: api-qa.dhlecommerce.com
+schemes:
+  - https
+produces:
+  - application/json
 paths:
-  /endpoint_1:
-    x-summary: Popis endpointu 1
-    x-description: 'tady je popis'
-    get:
-      summary: Název GET metody webservicy
-      description: |
-       Tady je popis GET metody webservicy
-      operationId: getZprava
+  /label/v1:
+    post:
+      summary: Generate Label for Single Mail Item
+      description: >-
+        Purpose of this service is to generate labels for single mail item only
+        (single package object). The benefit of this service is that it is
+        synchronous and returns label contents directly in the response, so it
+        is no necessity to download the labels afterwards.
       parameters:
-        - name: name
-          in: query
-          description: name to include in the message
+        - name: Authorization
+          in: header
+          description: >-
+            Access Token together with the "Bearer" prefix is required.
+            **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
           type: string
-          x-example: 'stock=1'
+        - name: format
+          in: query
+          description: Mandatory parameter to define file format. One of PNG|ZPL|PDF
+          default: PNG
+          enum:
+            - PDF
+            - PNG
+            - ZPL
+          required: true
+          type: string
+        - name: labelSize
+          in: query
+          description: Mandatory parameter to define size of the label. One of 4x6|4x4.
+          default: 4x6
+          enum:
+            - 4x6
+            - 4x4
+          required: true
+          type: string
+        - name: pageSize
+          in: query
+          description: >-
+            Conditionaly mandatory, only for PDF format. Size of the page in PDF
+            file. One of A4|400x600|400x600.
+          default: A4
+          enum:
+            - A4
+            - 400x600
+            - 400x400
+          required: false
+          type: string
+        - name: layout
+          in: query
+          description: >-
+            Conditionaly mandatory, only for PDF format. Defines way how single
+            labels are layouted on the PDF page. In case of pageSize=A4 it might
+            be 4x1 or 1x1. Otherwise 1x1 is the only option.
+          default: 1x1
+          enum:
+            - 4x1
+            - 1x1
+          required: false
+          type: string
+        - name: message
+          in: body
+          description: Shipment details in defined JSON schema
+          required: true
+          schema:
+            $ref: '#/definitions/RequestFormat'
+      tags:
+        - Label
       responses:
-        200:
-          description: 'List'
-          examples:
-            application/json:
-              - question: "Favourite programming language?"
-                published_at: "2015-08-05T08:40:51.620Z"
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/ResponseFormat'
+          headers:
+            X-CorrelationID:
+              type: string
+              description: >-
+                Correlation ID is unique for your request. Could be used by DHL
+                Support for traceability purpose in case of an API error.
+        '400':
+          description: Bad Request - Invalid URI parameters or querystring
+          schema:
+            $ref: '#/definitions/ErrResponseFormat'
+          headers:
+            X-CorrelationID:
+              type: string
+              description: >-
+                Correlation ID is unique for your request. Could be used by DHL
+                Support for traceability purpose in case of an API error.
+        '401':
+          description: >-
+            Unauthorized Access - Invalid token or Authentication Header
+            parameter
+          schema:
+            $ref: '#/definitions/ErrResponseFormat'
+          headers:
+            X-CorrelationID:
+              type: string
+              description: >-
+                Correlation ID is unique for your request. Could be used by DHL
+                Support for traceability purpose in case of an API error.
+        '429':
+          description: Too many requests in given amount of time
+          schema:
+            $ref: '#/definitions/ErrResponseFormat'
+          headers:
+            X-CorrelationID:
+              type: string
+              description: >-
+                Correlation ID is unique for your request. Could be used by DHL
+                Support for traceability purpose in case of an API error.
+        '503':
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/ErrResponseFormat'
+          headers:
+            X-CorrelationID:
+              type: string
+              description: >-
+                Correlation ID is unique for your request. Could be used by DHL
+                Support for traceability purpose in case of an API error.
+definitions:
+  RequestFormat:
+    type: object
+    properties:
+      shipments:
+        type: array
+        items:
+          type: object
+          properties:
+            pickup:
+              type: string
+            distributionCenter:
+              type: string
+            packages:
+              type: array
+              items:
+                type: object
+                properties:
+                  consigneeAddress:
+                    type: object
+                    properties:
+                      address1:
+                        type: string
+                      address2:
+                        type: string
+                      city:
+                        type: string
+                      country:
+                        type: string
+                      email:
+                        type: string
+                      name:
+                        type: string
+                      phone:
+                        type: string
+                      postalCode:
+                        type: string
+                      state:
+                        type: string
+                  packageDetails:
+                    type: object
+                    properties:
+                      billingRef1:
+                        type: string
+                      billingRef2:
+                        type: string
+                      codAmount:
+                        type: number
+                      currency:
+                        type: string
+                      declaredValue:
+                        type: number
+                      dgCategory:
+                        type: string
+                      dimensionUom:
+                        type: string
+                      dutiesPaid:
+                        type: string
+                      insuredValue:
+                        type: number
+                      mailtype:
+                        type: string
+                      orderedProduct:
+                        type: string
+                      packageDesc:
+                        type: string
+                      packageId:
+                        type: string
+                      packageRefName:
+                        type: string
+                      weight:
+                        type: number
+                      weightUom:
+                        type: string
+                      height:
+                        type: string
+                      length:
+                        type: string
+                  returnAddress:
+                    type: object
+                    properties:
+                      address1:
+                        type: string
+                      city:
+                        type: string
+                      companyName:
+                        type: string
+                      country:
+                        type: string
+                      name:
+                        type: string
+                      postalCode:
+                        type: string
+                      state:
+                        type: string
+                  customsDetails:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        itemDescription:
+                          type: string
+                        countryOfOrigin:
+                          type: string
+                        hsCode:
+                          type: string
+                        packagedQuantity:
+                          type: number
+                        itemValue:
+                          type: number
+                        skuNumber:
+                          type: string
+  ResponseFormat:
+    type: object
+    properties:
+      shipments:
+        type: array
+        items:
+          type: object
+          properties:
+            pickup:
+              type: string
+            distributionCenter:
+              type: string
+            packages:
+              type: array
+              items:
+                type: object
+                properties:
+                  consigneeAddress:
+                    type: object
+                    properties:
+                      address1:
+                        type: string
+                      address2:
+                        type: string
+                      city:
+                        type: string
+                      country:
+                        type: string
+                      email:
+                        type: string
+                      name:
+                        type: string
+                      phone:
+                        type: string
+                      postalCode:
+                        type: string
+                      state:
+                        type: string
+                  customsDetails:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        countryOfOrigin:
+                          type: string
+                        hsCode:
+                          type: string
+                        itemDescription:
+                          type: string
+                        itemValue:
+                          type: integer
+                        packagedQuantity:
+                          type: integer
+                        skuNumber:
+                          type: string
+                  packageDetails:
+                    type: object
+                    properties:
+                      billingRef1:
+                        type: string
+                      billingRef2:
+                        type: string
+                      codAmount:
+                        type: integer
+                      currency:
+                        type: string
+                      declaredValue:
+                        type: integer
+                      dgCategory:
+                        type: string
+                      dimensionUom:
+                        type: string
+                      dutiesPaid:
+                        type: string
+                      height:
+                        type: string
+                      insuredValue:
+                        type: integer
+                      length:
+                        type: string
+                      mailtype:
+                        type: string
+                      orderedProduct:
+                        type: string
+                      packageDesc:
+                        type: string
+                      packageId:
+                        type: string
+                      packageRefName:
+                        type: string
+                      weight:
+                        type: integer
+                      weightUom:
+                        type: string
+                  returnAddress:
+                    type: object
+                    properties:
+                      address1:
+                        type: string
+                      city:
+                        type: string
+                      companyName:
+                        type: string
+                      country:
+                        type: string
+                      name:
+                        type: string
+                      postalCode:
+                        type: string
+                      state:
+                        type: string
+                  responseDetails:
+                    type: object
+                    properties:
+                      labelDetails:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            packageId:
+                              type: string
+                            format:
+                              type: string
+                            templateId:
+                              type: string
+                            labelData:
+                              type: string
+                      trackingNumber:
+                        type: string
+                      trackingNumberStatus:
+                        type: string
+  ErrResponseFormat:
+    type: object
+    properties:
+      reasons:
+        type: array
+        items:
+          type: object
+          properties:
+            msg:
+              type: string
+          required:
+            - msg
+      details:
+        type: object
+        properties:
+          msgId:
+            type: string
+        required:
+          - msgId
+    required:
+      - reasons
+      - details
